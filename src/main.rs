@@ -15,6 +15,7 @@ use sequoia_openpgp::{
     crypto::Password,
     packet::{Signature, UserID},
     tpk::{CipherSuite, TPKBuilder, TPK},
+    Packet, PacketPile,
 };
 use std::fs::File;
 use std::io::{stdin, stdout, Write};
@@ -47,7 +48,9 @@ fn main() -> sequoia_openpgp::Result<()> {
     tpk.as_tsk().serialize(&mut key_file).unwrap();
 
     let mut rev_file = File::create(rev_path)?;
-    revocation_sig.serialize(&mut rev_file).unwrap();
+    TPK::from_packet_pile(PacketPile::from(Packet::from(revocation_sig)))?
+        .serialize(&mut rev_file)
+        .unwrap();
 
     Ok(())
 }
