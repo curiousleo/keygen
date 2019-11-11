@@ -15,19 +15,18 @@ use sequoia_openpgp::{
     crypto::Password,
     packet::{Signature, UserID},
     tpk::{CipherSuite, TPKBuilder, TPK},
-    Packet, PacketPile,
 };
 use std::fs::File;
 use std::io::{stdin, stdout, Write};
 use termion::input::TermRead;
 
 fn main() -> sequoia_openpgp::Result<()> {
-    let (key_path, rev_path) = {
+    let key_path = {
         let args: Vec<String> = std::env::args().collect();
-        if args.len() != 3 {
-            panic!("Usage: genkey <key file> <revocation file>");
+        if args.len() != 2 {
+            panic!("Usage: genkey <key file>");
         }
-        (args[1].clone(), args[2].clone())
+        args[1].clone()
     };
 
     let user_id = {
@@ -42,15 +41,16 @@ fn main() -> sequoia_openpgp::Result<()> {
     };
 
     println!("Generating key ...");
-    let (tpk, revocation_sig) = generate_key(user_id, password)?;
+    let (tpk, _revocation_sig) = generate_key(user_id, password)?;
 
     let mut key_file = File::create(key_path)?;
     tpk.as_tsk().serialize(&mut key_file).unwrap();
 
-    let mut rev_file = File::create(rev_path)?;
-    TPK::from_packet_pile(PacketPile::from(Packet::from(revocation_sig)))?
-        .serialize(&mut rev_file)
-        .unwrap();
+    // TODO: output revocation certificate
+    // let mut rev_file = File::create(rev_path)?;
+    // TPK::from_packet_pile(PacketPile::from(Packet::from(revocation_sig)))?
+    //     .serialize(&mut rev_file)
+    //     .unwrap();
 
     Ok(())
 }
