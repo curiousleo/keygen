@@ -1,0 +1,13 @@
+[package]
+name = "keygen"
+version = "0.1.0"
+authors = ["Leonhard Markert <curiousleo@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+sequoia-openpgp = "0.11"
+termion = "1"
+
+[dev-dependencies]
+tempfile = "3"
+test_bin = "0.2"
