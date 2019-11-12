@@ -10,8 +10,10 @@ sections.
 
 ## Caveats
 
-- `keygen` generates RSA keys with a key length of 3072 bits instead of the
-  4096 bits recommended in the guide. This is because the underlying library
+This project is still under construction. The following caveats apply:
+
+- `keygen` generates RSA keys with a key length of 3072 bit instead of the
+  4096 bit recommended in the guide. This is because the underlying library
   used by `keygen` does not currently support 4096-bit RSA keys.
 - `keygen` currently does not set expiration dates for the subkeys as
   recommended in the guide. This is because the underlying library does not
