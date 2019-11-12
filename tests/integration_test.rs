@@ -10,11 +10,10 @@ fn integration() -> std::io::Result<()> {
     // Setup
     let dir = tempfile::tempdir()?;
     let key_path = dir.path().join("key");
-    let rev_path = dir.path().join("rev");
 
     // Run keygen
     let mut keygen = test_bin::get_test_bin("keygen")
-        .args(&[&key_path, &rev_path])
+        .args(&[&key_path])
         .stdin(Stdio::piped())
         .spawn()?;
     {
@@ -26,7 +25,6 @@ fn integration() -> std::io::Result<()> {
     // Basic keygen assertions
     assert!(status.success(), "keygen exit status: {}", status);
     assert!(key_path.is_file(), "keygen key file");
-    assert!(rev_path.is_file(), "keygen revocation certificate file");
 
     // Analyse generated key with gpg, inspired by https://stackoverflow.com/a/22147722
     let gpg_show_key = Command::new("gpg")
