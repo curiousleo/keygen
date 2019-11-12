@@ -1,7 +1,6 @@
-//! genkey <key file> <revocation file>
+//! genkey <key file>
 //!
-//! Generates an OpenPGP keypair and revocation file and writes them to the paths specified as
-//! command line arguments.
+//! Generates an OpenPGP keypair and writes them to the paths specified as command line arguments.
 //!
 //! The 3072-bit RSA keypair contains:
 //! - a master key that can only certify
