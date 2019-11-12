@@ -12,18 +12,20 @@ sections.
 
 This project is still under construction. The following caveats apply:
 
-- `keygen` currently does not set **expiration dates** for the subkeys as
-  recommended in the guide. This is because the underlying library [does not
-  support setting the expiration date
-  separately](https://gitlab.com/sequoia-pgp/sequoia/issues/366) for the master
-  (which should not have an expiration date) and subkeys (which should).
 - `keygen` generates RSA keys with a key length of **3072 bit instead of the
   4096 bit** recommended in the guide. This is because the underlying library
-  [does not currently support 4096-bit RSA
-  keys](https://gitlab.com/sequoia-pgp/sequoia/issues/367).
-- `keygen` does not currently [write the **revocation certificate** to a
-  file](https://gitlab.com/sequoia-pgp/sequoia/issues/368), you need to
-  generate it using `gpg`.
+  does not currently support 4096-bit RSA keys.
+  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/367).
+- `keygen` currently does not set **expiration dates** for the subkeys as
+  recommended in the guide. This is because the underlying library does not
+  currently support setting the expiration date separately for the master
+  (which should not have an expiration date) and subkeys (which should).
+  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/366)
+- `keygen` does not write the **revocation certificate** to a file, you need to
+  [generate
+  it](https://debian-administration.org/article/450/Generating_a_revocation_certificate_with_gpg)
+  using `gpg`.
+  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/368)
 
 ## What is this good for?
 
