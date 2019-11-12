@@ -1,4 +1,4 @@
-//! genkey <key file>
+//! keygen <key file>
 //!
 //! Generates an OpenPGP keypair and writes them to the paths specified as command line arguments.
 //!
