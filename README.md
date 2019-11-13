@@ -15,17 +15,12 @@ This project is still under construction. The following caveats apply:
 - `keygen` generates RSA keys with a key length of **3072 bit instead of the
   4096 bit** recommended in the guide. This is because the underlying library
   does not currently support 4096-bit RSA keys.
-  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/367).
+  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/367)
 - `keygen` currently does not set **expiration dates** for the subkeys as
   recommended in the guide. This is because the underlying library does not
   currently support setting the expiration date separately for the master
   (which should not have an expiration date) and subkeys (which should).
   [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/366)
-- `keygen` does not write the **revocation certificate** to a file, you need to
-  [generate
-  it](https://debian-administration.org/article/450/Generating_a_revocation_certificate_with_gpg)
-  using `gpg`.
-  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/368)
 
 ## What is this good for?
 
@@ -45,9 +40,11 @@ Given a name, address and password of your choosing, `keygen` generates a
 - a subkey that can only _encrypt_;
 - a subkey that can only _authenticate_.
 
+In addition, `keygen` generates a revocation certificate for the master key.
+
 ## Why should I trust you?
 
-Don't. Verify the generated key!
+Don't. Verify the generated key and certificate!
 
 Check the
 [Verify](https://github.com/drduh/YubiKey-Guide/blob/010accf86451eca0a933c70b9b74b822796d78e3/README.md#sub-keys)
@@ -55,11 +52,13 @@ section of @drduh's guide to see what the key should look like. Then run the
 following to check your key without importing it:
 
 ```console
-$ gpg --import-options show-only --import <keyfile>
+$ gpg --import-options show-only --import <key file or certificate file>
 ```
 
-When you're satisfied, import the key as follows:
+When you're satisfied, import the key as follows. Do _not_ import the
+revocation certificate at this point - doing so will revoke the key you just
+created!
 
 ```console
-$ gpg --import <keyfile>
+$ gpg --import <key file>
 ```
