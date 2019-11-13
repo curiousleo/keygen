@@ -1,4 +1,5 @@
 use std::io::{BufRead, Cursor, Write};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 const NAME: &str = "Clark Kent";
@@ -10,10 +11,11 @@ fn integration() -> std::io::Result<()> {
     // Setup
     let dir = tempfile::tempdir()?;
     let key_path = dir.path().join("key");
+    let rev_path = dir.path().join("rev");
 
     // Run keygen
     let mut keygen = test_bin::get_test_bin("keygen")
-        .args(&[&key_path])
+        .args(&[&key_path, &rev_path])
         .stdin(Stdio::piped())
         .spawn()?;
     {
@@ -24,46 +26,33 @@ fn integration() -> std::io::Result<()> {
 
     // Basic keygen assertions
     assert!(status.success(), "keygen exit status: {}", status);
-    assert!(key_path.is_file(), "keygen key file");
+    assert!(key_path.is_file(), "key file exists");
+    assert!(rev_path.is_file(), "revocation file exists");
 
-    // Analyse generated key with gpg, inspired by https://stackoverflow.com/a/22147722
-    let gpg_show_key = Command::new("gpg")
-        .args(&[
-            "--with-colons",
-            "--import-options",
-            "show-only",
-            "--import",
-            key_path.to_str().unwrap(),
-        ])
-        .output()?;
-    {
-        let status = gpg_show_key.status;
-        assert!(status.success(), "gpg exit status: {}", status);
-    }
-
-    // Parse gpg output as a list of records
-    let records: Vec<GPGRecord> = gpg_show_key
-        .stdout
-        .lines()
-        .map(|l| {
-            GPGRecord::new(
-                Cursor::new(l.unwrap())
-                    .split(b':')
-                    .map(|s| String::from_utf8(s.unwrap()).unwrap())
-                    .collect(),
-            )
-        })
-        .collect();
+    let records = gpg(&key_path)?;
 
     // Master key assertions
-    {
+    let master_fpr = {
         let master_keys: Vec<&GPGRecord> = records
             .iter()
-            .filter(|r| r.keytype() == Some(KeyType::Priv))
+            .filter(|r| r.rtype() == Some(RecordType::Priv))
             .collect();
         assert_eq!(1, master_keys.len(), "must have exactly one master key");
 
-        let master_key = master_keys[0];
+        // ASSUMPTION: the master key is the first one listed and its fingerprint comes second
+        let master_key = &records[0];
+        let master_fpr = &records[1];
+
+        assert_eq!(
+            Some(RecordType::Priv),
+            master_key.rtype(),
+            "master key comes first"
+        );
+        assert_eq!(
+            Some(RecordType::Fingerprint),
+            master_fpr.rtype(),
+            "fingerprint comes second"
+        );
         assert_eq!(
             PKAlgo::RSAEncryptOrSign,
             master_key.pk_algo().unwrap(),
@@ -85,13 +74,16 @@ fn integration() -> std::io::Result<()> {
             whole,
             "should have all capabilities"
         );
-    }
+
+        // In fingerprint records, the User ID field is used to store the actual fingerprint
+        master_fpr.user_id()
+    };
 
     // Subkey assertions
     {
         let sub_keys: Vec<&GPGRecord> = records
             .iter()
-            .filter(|r| r.keytype() == Some(KeyType::PrivSub))
+            .filter(|r| r.rtype() == Some(RecordType::PrivSub))
             .collect();
         assert_eq!(3, sub_keys.len(), "must have exactly three private subkeys");
 
@@ -120,19 +112,71 @@ fn integration() -> std::io::Result<()> {
         );
     }
 
+    // Revocation certificate assertions
+    {
+        let records = gpg(&rev_path)?;
+        assert_eq!(1, records.len(), "certificate file contains single record");
+
+        let sig = &records[0];
+        assert_eq!(
+            Some(RecordType::RevSigStandalone),
+            sig.rtype(),
+            "revocation certificate"
+        );
+        assert_eq!(
+            master_fpr,
+            sig.issuer_fpr(),
+            "revocation certificate for master key"
+        );
+    }
+
     Ok(())
+}
+
+// Analyse generated key with gpg, inspired by https://stackoverflow.com/a/22147722
+fn gpg(path: &PathBuf) -> std::io::Result<Vec<GPGRecord>> {
+    let gpg_output = Command::new("gpg")
+        .args(&[
+            "--with-colons",
+            "--import-options",
+            "show-only",
+            "--import",
+            path.to_str().unwrap(),
+        ])
+        .output()?;
+    {
+        let status = gpg_output.status;
+        assert!(status.success(), "gpg exit status: {}", status);
+    }
+
+    // Parse gpg output as a list of records
+    let records = gpg_output
+        .stdout
+        .lines()
+        .map(|l| {
+            GPGRecord::new(
+                Cursor::new(l.unwrap())
+                    .split(b':')
+                    .map(|s| String::from_utf8(s.unwrap()).unwrap())
+                    .collect(),
+            )
+        })
+        .collect();
+    Ok(records)
 }
 
 struct GPGRecord {
     fields: Vec<String>,
 }
 
-#[derive(PartialEq)]
-enum KeyType {
+#[derive(Debug, PartialEq)]
+enum RecordType {
     Pub,
     PubSub,
     Priv,
     PrivSub,
+    Fingerprint,
+    RevSigStandalone,
 }
 
 #[derive(Debug, PartialEq)]
@@ -207,12 +251,14 @@ impl GPGRecord {
         GPGRecord { fields }
     }
 
-    fn keytype(&self) -> Option<KeyType> {
+    fn rtype(&self) -> Option<RecordType> {
         match self.fields[0].as_str() {
-            "pub" => Some(KeyType::Pub),
-            "sub" => Some(KeyType::PubSub),
-            "sec" => Some(KeyType::Priv),
-            "ssb" => Some(KeyType::PrivSub),
+            "pub" => Some(RecordType::Pub),
+            "sub" => Some(RecordType::PubSub),
+            "sec" => Some(RecordType::Priv),
+            "ssb" => Some(RecordType::PrivSub),
+            "rvs" => Some(RecordType::RevSigStandalone),
+            "fpr" => Some(RecordType::Fingerprint),
             _ => None,
         }
     }
@@ -241,6 +287,10 @@ impl GPGRecord {
 
     fn user_id(&self) -> String {
         self.fields[9].clone()
+    }
+
+    fn issuer_fpr(&self) -> String {
+        self.fields[12].clone()
     }
 
     fn capability(&self) -> (Capability, Capability) {
