@@ -1,6 +1,6 @@
 language: rust
 before_install: sudo apt-get update
-install: sudo apt-get install clang libclang libgmp nettle pkgconfig
+install: sudo apt-get install clang libclang-dev libgmp-dev nettle-dev pkg-config
 script: cargo test
 
 # Test all supported Rust versions on Linux. On macOS, test against Rust stable
