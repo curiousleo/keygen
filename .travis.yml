@@ -1,0 +1,9 @@
+language: rust
+script: cargo test
+
+jobs:
+  include:
+    - rust: 1.33.0
+    - rust: stable
+    - rust: beta
+    - rust: nightly
