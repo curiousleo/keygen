@@ -10,12 +10,8 @@ sections.
 
 ## Caveats
 
-This project is still under construction. The following caveats apply:
+This project is still under construction. The following caveat applies:
 
-- `keygen` generates RSA keys with a key length of **3072 bit instead of the
-  4096 bit** recommended in the guide. This is because the underlying library
-  does not currently support 4096-bit RSA keys.
-  [Upstream ticket.](https://gitlab.com/sequoia-pgp/sequoia/issues/367)
 - `keygen` currently does not set **expiration dates** for the subkeys as
   recommended in the guide. This is because the underlying library does not
   currently support setting the expiration date separately for the master
@@ -33,7 +29,7 @@ program to automate it.
 ## What does `keygen` do?
 
 Given a name, address and password of your choosing, `keygen` generates a
-3072-bit RSA GPG key with the following structure:
+4096-bit RSA GPG key with the following structure:
 
 - a master key that can only _certify_;
 - a subkey that can only _sign_;
