@@ -3,7 +3,7 @@
 //! Generates an OpenPGP keypair and writes it and a corresponding revocation certificate to the
 //! paths specified as command line arguments.
 //!
-//! The 3072-bit RSA keypair contains:
+//! The 4096-bit RSA keypair contains:
 //! - a master key that can only certify
 //! - a subkey that can only sign
 //! - a subkey that can only encrypt
@@ -33,7 +33,7 @@ fn main() -> sequoia_openpgp::Result<()> {
     let user_id = {
         let name = prompt("Name:     ")?;
         let address = prompt("E-mail:   ")?;
-        UserID::from_address(name, /* comment */ String::new(), address)?
+        UserID::from_address(Some(name), /* comment */ None, address)?
     };
 
     let password = {
@@ -64,8 +64,8 @@ fn generate_key(user_id: UserID, password: Password) -> sequoia_openpgp::Result<
     let auth_only: KeyFlags = KeyFlags::empty().set_authenticate(true);
 
     TPKBuilder::new()
-        // RSA3072 with SHA512 and AES256
-        .set_cipher_suite(CipherSuite::RSA3k)
+        // RSA4096 with SHA512 and AES256
+        .set_cipher_suite(CipherSuite::RSA4k)
         .primary_keyflags(certify_only)
         .set_expiration(None)
         .set_password(Some(password))

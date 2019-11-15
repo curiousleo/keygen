@@ -6,6 +6,8 @@ const NAME: &str = "Clark Kent";
 const ADDRESS: &str = "kent@dailyplanet.com";
 const PASSWORD: &str = "1-aM-k4l-3L";
 
+const KEYLEN: usize = 4096;
+
 #[test]
 fn integration() -> std::io::Result<()> {
     // Setup
@@ -58,7 +60,7 @@ fn integration() -> std::io::Result<()> {
             master_key.pk_algo().unwrap(),
             "wrong algorithm"
         );
-        assert_eq!(3072, master_key.keylen().unwrap(), "wrong key length");
+        assert_eq!(KEYLEN, master_key.keylen().unwrap(), "wrong key length");
         assert!(!master_key.has_expiration(), "must not expire");
 
         let (own, whole) = master_key.capability();
@@ -88,7 +90,7 @@ fn integration() -> std::io::Result<()> {
         assert_eq!(3, sub_keys.len(), "must have exactly three private subkeys");
 
         sub_keys.iter().for_each(|r| {
-            assert_eq!(3072, r.keylen().unwrap(), "wrong key length");
+            assert_eq!(KEYLEN, r.keylen().unwrap(), "wrong key length");
             assert_eq!(
                 PKAlgo::RSAEncryptOrSign,
                 r.pk_algo().unwrap(),

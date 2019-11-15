@@ -5,8 +5,13 @@ authors = ["Leonhard Markert <curiousleo@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-sequoia-openpgp = "0.11"
 termion = "1"
+
+# We need CipherSuite::RSA4k, which the latest release 0.11.0 does not yet
+# contain.
+[dependencies.sequoia-openpgp]
+git = "https://gitlab.com/sequoia-pgp/sequoia.git"
+rev = "7735b05e8cf82ae943e8b7b0dfed4a26cd6c3db4"
 
 [dev-dependencies]
 tempfile = "3"
