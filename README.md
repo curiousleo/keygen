@@ -1,5 +1,7 @@
 # keygen
 
+[![Build Status](https://api.cirrus-ci.com/github/curiousleo/keygen.svg?branch=master)](https://cirrus-ci.com/github/curiousleo/keygen)
+
 Generates GPG keys as described in
 [drduh/YubiKey-Guide](https://github.com/drduh/YubiKey-Guide/blob/010accf86451eca0a933c70b9b74b822796d78e3/README.md),
 specifically the [Master

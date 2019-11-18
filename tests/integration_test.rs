@@ -17,7 +17,11 @@ fn integration() -> std::io::Result<()> {
 
     // Run keygen
     let mut keygen = test_bin::get_test_bin("keygen")
-        .args(&[&key_path, &rev_path])
+        .args(&[
+            "--noninteractive",
+            key_path.to_str().unwrap(),
+            rev_path.to_str().unwrap(),
+        ])
         .stdin(Stdio::piped())
         .spawn()?;
     {
