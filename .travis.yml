@@ -3,7 +3,7 @@ script: cargo test
 
 # Test all supported Rust versions on Linux. On macOS, test against Rust stable
 # only to save time.
-jobs:
+matrix:
   include:
     # Linux
     - rust: 1.34.0
