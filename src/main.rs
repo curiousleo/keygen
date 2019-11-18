@@ -22,22 +22,33 @@ use std::io::{stdin, stdout, Write};
 use termion::input::TermRead;
 
 fn main() -> sequoia_openpgp::Result<()> {
-    let (key_path, rev_path) = {
+    let (key_path, rev_path, interactive) = {
         let args: Vec<String> = std::env::args().collect();
-        if args.len() != 3 {
-            panic!("Usage: keygen <key file> <revocation certificate file>");
+        if args.len() == 3 {
+            (
+                args[1].clone(),
+                args[2].clone(),
+                /* interactive */ true,
+            )
+        } else if args.len() == 4 && args[1] == "--noninteractive" {
+            (
+                args[2].clone(),
+                args[3].clone(),
+                /* interactive */ false,
+            )
+        } else {
+            panic!("Usage: keygen [--noninteractive] <key file> <revocation certificate file>");
         }
-        (args[1].clone(), args[2].clone())
     };
 
     let user_id = {
-        let name = prompt("Name:     ")?;
-        let address = prompt("E-mail:   ")?;
+        let name = prompt("Name:     ", interactive)?;
+        let address = prompt("E-mail:   ", interactive)?;
         UserID::from_address(Some(name), /* comment */ None, address)?
     };
 
     let password = {
-        let password = prompt_passwd("Password: ")?;
+        let password = prompt_passwd("Password: ", interactive)?;
         Password::from(password.into_bytes())
     };
 
@@ -76,9 +87,11 @@ fn generate_key(user_id: UserID, password: Password) -> sequoia_openpgp::Result<
         .generate()
 }
 
-fn prompt(query: &str) -> std::io::Result<String> {
-    print!("{}", query);
-    stdout().flush()?;
+fn prompt(query: &str, interactive: bool) -> std::io::Result<String> {
+    if interactive {
+        print!("{}", query);
+        stdout().flush()?;
+    }
 
     let mut input = String::new();
     stdin().read_line(&mut input)?;
@@ -89,7 +102,11 @@ fn prompt(query: &str) -> std::io::Result<String> {
     Ok(input)
 }
 
-fn prompt_passwd(query: &str) -> std::io::Result<String> {
+fn prompt_passwd(query: &str, interactive: bool) -> std::io::Result<String> {
+    if !interactive {
+        return prompt(query, interactive);
+    }
+
     print!("{}", query);
     stdout().flush()?;
 
