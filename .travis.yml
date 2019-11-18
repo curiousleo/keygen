@@ -1,11 +1,10 @@
 language: rust
-sudo: false
 
 script: cargo test
 
 # Test all supported Rust versions on Linux. On macOS, test against Rust stable
 # only to save time.
-matrix:
+jobs:
   include:
     # Linux
     - rust: 1.34.0
