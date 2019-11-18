@@ -10,11 +10,12 @@ jobs:
     - rust: 1.34.0
       addons: &apt_addons
         apt:
-          - clang
-          - libclang-dev
-          - libgmp-dev
-          - nettle-dev
-          - pkg-config
+          packages:
+            - clang
+            - libclang-dev
+            - libgmp-dev
+            - nettle-dev
+            - pkg-config
     - rust: stable
       addons: *apt_addons
     - rust: beta
@@ -26,6 +27,7 @@ jobs:
       os: osx
       addons:
         homebrew:
-          - gmp
-          - libnettle
-          - pkg-config
+          packages:
+            - gmp
+            - libnettle
+            - pkg-config
