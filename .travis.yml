@@ -1,15 +1,4 @@
 language: rust
-addons:
-  apt:
-    - clang
-    - libclang-dev
-    - libgmp-dev
-    - nettle-dev
-    - pkg-config
-  homebrew:
-    - gmp
-    - libnettle
-    - pkg-config
 script: cargo test
 
 # Test all supported Rust versions on Linux. On macOS, test against Rust stable
@@ -17,10 +6,25 @@ script: cargo test
 jobs:
   include:
     # Linux
-    - rust: 1.33.0
+    - rust: 1.34.0
+      addons: &apt_addons
+        apt:
+          - clang
+          - libclang-dev
+          - libgmp-dev
+          - nettle-dev
+          - pkg-config
     - rust: stable
+      addons: *apt_addons
     - rust: beta
+      addons: *apt_addons
     - rust: nightly
+      addons: *apt_addons
     # macOS
     - rust: stable
       os: osx
+      addons:
+        homebrew:
+          - gmp
+          - libnettle
+          - pkg-config
