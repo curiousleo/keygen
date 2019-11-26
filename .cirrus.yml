@@ -1,20 +1,19 @@
 env:
   CARGO_HOME: ${HOME}/.cargo
+  PATH: ${PATH}:${CARGO_HOME}/bin # for rustup
 
 linux_task:
-  matrix:
-    - container:
-        image: rust:1.36-buster # earliest supported version
-    - container:
-        image: rust:buster # latest supported version
-    - allow_failures: true
-      container:
-        image: rustlang/rust:nightly-buster # so we learn about breakages early
+  env:
+    TARGET: x86_64-unknown-linux-musl
+  container:
+    image: debian:buster-20191118-slim
   install_script:
-    - apt-get update
-    - apt-get install -y clang libclang-dev llvm # present: libgmp-dev nettle-dev pkg-config
-    - rustup component add rustfmt # check_script requirement
-    - apt-get install -y gpg # test_script requirement
+    - apt-get -qqq update
+    - apt-get -qqq install clang curl libclang-dev llvm libgmp-dev nettle-dev pkg-config
+    - apt-get -qqq install gpg # test_script requirement
+    - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable-${TARGET} -y
+    - source ${CARGO_HOME}/env
+    - cargo version
   cargo_cache: &cargo_cache
     folder: ${CARGO_HOME}/registry
     fingerprint_script: cat Cargo.lock
@@ -23,7 +22,7 @@ linux_task:
   test_script: &test_script
     - RUST_BACKTRACE=1 cargo test
   build_script: &build_script
-    - cargo build --bins --release
+    - cargo build --bins --release --target ${TARGET}
   before_cache_script: &before_cache_script
     - rm -rf ${CARGO_HOME}/registry/index
   binaries_artifacts: &binaries_artifacts
@@ -31,7 +30,7 @@ linux_task:
 
 macos_task:
   env:
-    PATH: ${PATH}:${CARGO_HOME}/bin # for rustup
+    TARGET: x86_64-apple-darwin
   matrix:
     osx_instance:
       image: mojave-xcode
