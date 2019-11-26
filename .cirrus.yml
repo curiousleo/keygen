@@ -1,6 +1,6 @@
 linux_task:
   env:
-    RUSTUP_TOOLCHAIN: stable-x86_64-unknown-linux-musl
+    #RUSTUP_TOOLCHAIN: stable-x86_64-unknown-linux-musl
     CARGO_HOME: ${HOME}/.cargo
     PATH: ${PATH}:${CARGO_HOME}/bin # for rustup
   container:
@@ -9,11 +9,12 @@ linux_task:
     - apt-get -qq update > /dev/null
     - apt-get -qq install clang curl libclang-dev llvm libgmp-dev nettle-dev pkg-config > /dev/null
     - apt-get -qq install gpg > /dev/null # test_script requirement
-    - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${RUSTUP_TOOLCHAIN} -y
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y # --default-toolchain ${RUSTUP_TOOLCHAIN}
     - source ${CARGO_HOME}/env
     - which rustup
     - rustup show
     - which cargo
+    - ls -lah $(which cargo)
     - cargo version
   cargo_cache: &cargo_cache
     folder: ${CARGO_HOME}/registry
