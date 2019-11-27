@@ -7,7 +7,7 @@ linux_task:
     image: debian:buster-20191118-slim
   install_script:
     - apt-get -qq update > /dev/null
-    - apt-get -qq install clang curl libclang-dev llvm libgmp-dev musl nettle-dev pkg-config > /dev/null
+    - apt-get -qq install clang curl libclang-dev llvm libgcc1 libgmp-dev musl nettle-dev pkg-config > /dev/null
     - apt-get -qq install gpg > /dev/null # test_script requirement
     - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUSTUP_TOOLCHAIN}
     - source ${CARGO_HOME}/env
