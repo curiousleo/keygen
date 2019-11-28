@@ -9,6 +9,7 @@
 //! - a subkey that can only encrypt
 //! - a subkey that can only authenticate
 
+use atty::Stream;
 use sequoia_openpgp::serialize::Serialize;
 use sequoia_openpgp::{
     constants::KeyFlags,
@@ -22,37 +23,28 @@ use std::io::{stdin, stdout, Write};
 use termion::input::TermRead;
 
 fn main() -> sequoia_openpgp::Result<()> {
-    let (key_path, rev_path, interactive) = {
+    let (key_path, rev_path) = {
         let args: Vec<String> = std::env::args().collect();
-        if args.len() == 3 {
-            (
-                args[1].clone(),
-                args[2].clone(),
-                /* interactive */ true,
-            )
-        } else if args.len() == 4 && args[1] == "--noninteractive" {
-            (
-                args[2].clone(),
-                args[3].clone(),
-                /* interactive */ false,
-            )
-        } else {
-            panic!("Usage: keygen [--noninteractive] <key file> <revocation certificate file>");
+        if args.len() != 3 {
+            panic!("Usage: keygen <key file> <revocation certificate file>");
         }
+        (args[1].clone(), args[2].clone())
     };
 
     let user_id = {
-        let name = prompt("Name:     ", interactive)?;
-        let address = prompt("E-mail:   ", interactive)?;
+        let name = prompt("Name:     ")?;
+        let address = prompt("E-mail:   ")?;
         UserID::from_address(Some(name), /* comment */ None, address)?
     };
 
     let password = {
-        let password = prompt_passwd("Password: ", interactive)?;
+        let password = prompt_passwd("Password: ")?;
         Password::from(password.into_bytes())
     };
 
-    println!("Generating key ...");
+    if is_interactive() {
+        println!("Generating key ...");
+    }
     let (tpk, revocation_sig) = generate_key(user_id, password)?;
 
     let mut key_file = File::create(key_path)?;
@@ -87,8 +79,8 @@ fn generate_key(user_id: UserID, password: Password) -> sequoia_openpgp::Result<
         .generate()
 }
 
-fn prompt(query: &str, interactive: bool) -> std::io::Result<String> {
-    if interactive {
+fn prompt(query: &str) -> std::io::Result<String> {
+    if is_interactive() {
         print!("{}", query);
         stdout().flush()?;
     }
@@ -102,9 +94,9 @@ fn prompt(query: &str, interactive: bool) -> std::io::Result<String> {
     Ok(input)
 }
 
-fn prompt_passwd(query: &str, interactive: bool) -> std::io::Result<String> {
-    if !interactive {
-        return prompt(query, interactive);
+fn prompt_passwd(query: &str) -> std::io::Result<String> {
+    if !is_interactive() {
+        return prompt(query);
     }
 
     print!("{}", query);
@@ -115,4 +107,8 @@ fn prompt_passwd(query: &str, interactive: bool) -> std::io::Result<String> {
     println!();
 
     Ok(password)
+}
+
+fn is_interactive() -> bool {
+    atty::is(Stream::Stdin)
 }
