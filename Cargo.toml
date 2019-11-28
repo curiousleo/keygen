@@ -8,11 +8,11 @@ edition = "2018"
 atty = "0.2"
 termion = "1"
 
-# We need CipherSuite::RSA4k, which the latest release 0.11.0 does not yet
-# contain.
+# We need subkey expiration, which the latest release 0.12.0 does not yet
+# support.
 [dependencies.sequoia-openpgp]
 git = "https://gitlab.com/sequoia-pgp/sequoia.git"
-rev = "7735b05e8cf82ae943e8b7b0dfed4a26cd6c3db4"
+rev = "f53c77752ff04c3713c175a76a06723042e681ae"
 
 [dev-dependencies]
 tempfile = "3"

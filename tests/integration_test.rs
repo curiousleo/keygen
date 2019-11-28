@@ -1,6 +1,7 @@
 use std::io::{BufRead, Cursor, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::time::{Duration, SystemTime};
 
 const NAME: &str = "Clark Kent";
 const ADDRESS: &str = "kent@dailyplanet.com";
@@ -61,7 +62,7 @@ fn integration() -> std::io::Result<()> {
             "wrong algorithm"
         );
         assert_eq!(KEYLEN, master_key.keylen().unwrap(), "wrong key length");
-        assert!(!master_key.has_expiration(), "must not expire");
+        assert!(master_key.expiration().is_none(), "must not expire");
 
         let (own, whole) = master_key.capability();
         assert_eq!(Capability::certify_only(), own, "should only certify");
@@ -96,7 +97,20 @@ fn integration() -> std::io::Result<()> {
                 r.pk_algo().unwrap(),
                 "wrong algorithm"
             );
-            assert!(!r.has_expiration(), "must not expire")
+
+            let expiration = r
+                .expiration()
+                .expect("must expire")
+                .duration_since(SystemTime::now())
+                .expect("expiration must be in the future");
+            assert!(
+                expiration > Duration::new(365 * 24 * 60 * 60, 0),
+                "must still be valid in 365 days"
+            );
+            assert!(
+                expiration < Duration::new(367 * 24 * 60 * 60, 0),
+                "must no longer be valid in 367 days"
+            );
         });
 
         let own_capabilities: Vec<Capability> =
@@ -283,8 +297,16 @@ impl GPGRecord {
         }
     }
 
-    fn has_expiration(&self) -> bool {
-        !self.fields[6].is_empty()
+    fn expiration(&self) -> Option<SystemTime> {
+        match self.fields[6].as_str() {
+            "" => None,
+            src => {
+                let seconds_since_epoch =
+                    u64::from_str_radix(src, 10).expect("expiration parsing failed");
+                let expiration = SystemTime::UNIX_EPOCH + Duration::new(seconds_since_epoch, 0);
+                Some(expiration)
+            }
+        }
     }
 
     fn user_id(&self) -> String {
