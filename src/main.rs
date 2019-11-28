@@ -12,14 +12,15 @@
 use atty::Stream;
 use sequoia_openpgp::serialize::Serialize;
 use sequoia_openpgp::{
-    constants::KeyFlags,
     crypto::Password,
     packet::{Signature, UserID},
     tpk::{CipherSuite, TPKBuilder, TPK},
+    types::KeyFlags,
     Packet,
 };
 use std::fs::File;
 use std::io::{stdin, stdout, Write};
+use std::time::Duration;
 use termion::input::TermRead;
 
 fn main() -> sequoia_openpgp::Result<()> {
@@ -65,6 +66,7 @@ fn generate_key(user_id: UserID, password: Password) -> sequoia_openpgp::Result<
         .set_encrypt_for_transport(true)
         .set_encrypt_at_rest(true);
     let auth_only: KeyFlags = KeyFlags::empty().set_authenticate(true);
+    let leap_year = Duration::new(366 * 24 * 60 * 60, 0);
 
     TPKBuilder::new()
         // RSA4096 with SHA512 and AES256
@@ -73,9 +75,9 @@ fn generate_key(user_id: UserID, password: Password) -> sequoia_openpgp::Result<
         .set_expiration(None)
         .set_password(Some(password))
         .add_userid(user_id)
-        .add_subkey(sign_only)
-        .add_subkey(encrypt_only)
-        .add_subkey(auth_only)
+        .add_subkey(sign_only, Some(leap_year))
+        .add_subkey(encrypt_only, Some(leap_year))
+        .add_subkey(auth_only, Some(leap_year))
         .generate()
 }
 
