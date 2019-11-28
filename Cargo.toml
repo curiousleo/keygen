@@ -5,6 +5,7 @@ authors = ["Leonhard Markert <curiousleo@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
+atty = "0.2"
 termion = "1"
 
 # We need CipherSuite::RSA4k, which the latest release 0.11.0 does not yet

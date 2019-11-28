@@ -380,6 +380,7 @@ dependencies = [
 name = "keygen"
 version = "0.1.0"
 dependencies = [
+ "atty 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "sequoia-openpgp 0.11.0 (git+https://gitlab.com/sequoia-pgp/sequoia.git?rev=7735b05e8cf82ae943e8b7b0dfed4a26cd6c3db4)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "termion 1.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
