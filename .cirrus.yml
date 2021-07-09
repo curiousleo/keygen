@@ -1,47 +1,53 @@
-env:
-  CARGO_HOME: ${HOME}/.cargo
-
 linux_task:
-  matrix:
-    - container:
-        image: rust:1.36-buster # earliest supported version
-    - container:
-        image: rust:buster # latest supported version
-    - allow_failures: true
-      container:
-        image: rustlang/rust:nightly-buster # so we learn about breakages early
+  env:
+    RUSTUP_TOOLCHAIN: stable-x86_64-unknown-linux-musl
+    CARGO_HOME: ${HOME}/.cargo
+    PATH: ${PATH}:${CARGO_HOME}/bin # for rustup
+  container:
+    image: debian:buster-20191118-slim
   install_script:
-    - apt-get update
-    - apt-get install -y clang libclang-dev llvm # present: libgmp-dev nettle-dev pkg-config
-    - rustup component add rustfmt # check_script requirement
-    - apt-get install -y gpg # test_script requirement
+    - apt-get -qq update > /dev/null
+    - apt-get -qq install clang curl libclang-dev llvm libgcc1 libgmp-dev musl nettle-dev pkg-config > /dev/null
+    - apt-get -qq install gpg > /dev/null # test_script requirement
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUSTUP_TOOLCHAIN}
+    - source ${CARGO_HOME}/env
+    - which rustup
+    - rustup show
+    - which cargo
+    - ls -lah $(which cargo)
+    - cargo version
   cargo_cache: &cargo_cache
     folder: ${CARGO_HOME}/registry
     fingerprint_script: cat Cargo.lock
   check_script: &check_script
+    - source ${CARGO_HOME}/env
     - cargo fmt -- --check
   test_script: &test_script
+    - source ${CARGO_HOME}/env
     - RUST_BACKTRACE=1 cargo test
   build_script: &build_script
+    - source ${CARGO_HOME}/env
     - cargo build --bins --release
   before_cache_script: &before_cache_script
     - rm -rf ${CARGO_HOME}/registry/index
   binaries_artifacts: &binaries_artifacts
     path: "target/release/keygen"
 
-macos_task:
-  env:
-    PATH: ${PATH}:${CARGO_HOME}/bin # for rustup
-  matrix:
-    osx_instance:
-      image: mojave-xcode
-  install_script:
-    - curl https://sh.rustup.rs -sSf | sh -s -- -y # installs default profile, default toolchain
-    - brew install libnettle llvm # present: gmp pkg-config
-    - brew install gpg # test_script requirement
-  cargo_cache: *cargo_cache
-  check_script: *check_script
-  test_script: *test_script
-  build_script: *build_script
-  before_cache_script: *before_cache_script
-  binaries_artifacts: *binaries_artifacts
+#macos_task:
+#  env:
+#    TARGET: x86_64-apple-darwin
+#    CARGO_HOME: ${HOME}/.cargo
+#    PATH: ${PATH}:${CARGO_HOME}/bin # for rustup
+#  matrix:
+#    osx_instance:
+#      image: mojave-xcode
+#  install_script:
+#    - curl https://sh.rustup.rs -sSf | sh -s -- -y # installs default profile, default toolchain
+#    - brew install libnettle llvm # present: gmp pkg-config
+#    - brew install gpg # test_script requirement
+#  cargo_cache: *cargo_cache
+#  check_script: *check_script
+#  test_script: *test_script
+#  build_script: *build_script
+#  before_cache_script: *before_cache_script
+#  binaries_artifacts: *binaries_artifacts
